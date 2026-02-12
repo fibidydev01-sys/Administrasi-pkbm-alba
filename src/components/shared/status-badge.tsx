@@ -1,13 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import {
-  CheckCircle,
-  XCircle,
-  Clock,
-  FileEdit,
-  Send,
-  Archive,
-} from "lucide-react";
+import { Clock } from "lucide-react";
+import { STATUS_CONFIG } from "@/constants/surat-config";
 import type { SuratStatus } from "@/types";
 
 interface StatusBadgeProps {
@@ -15,18 +9,8 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: React.ElementType }
-> = {
-  draft: { label: "Draft", variant: "secondary", icon: FileEdit },
-  approved: { label: "Disetujui", variant: "default", icon: CheckCircle },
-  sent: { label: "Terkirim", variant: "outline", icon: Send },
-  archived: { label: "Diarsipkan", variant: "outline", icon: Archive },
-};
-
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusConfig[status] ?? {
+  const config = STATUS_CONFIG[status as SuratStatus] ?? {
     label: status,
     variant: "outline" as const,
     icon: Clock,

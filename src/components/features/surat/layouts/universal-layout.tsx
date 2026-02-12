@@ -1,27 +1,32 @@
 import type { SuratWithRelations, SnapshotTTD } from "@/types";
-import type { TemplateData } from "@/types/template";
-import { getTemplate } from "@/constants/template-registry";
+import { LAYOUT_CONFIG } from "@/types/template";
+import type { LayoutType } from "@/types/template";
 import KopSurat from "../shared/kop-surat";
 import SuratMeta from "../shared/surat-meta";
 import SuratBody from "../shared/surat-body";
 import SignatureBlock from "../shared/signature-block";
 import TembusanList from "../shared/tembusan-list";
+import type { KopVariant } from "../shared/kop-surat";
 
-interface PKBMLayoutProps {
+interface UniversalLayoutProps {
   surat: SuratWithRelations;
+  variant: KopVariant;
 }
 
-export default function PKBMLayout({ surat }: PKBMLayoutProps) {
-  const templateId = surat.template_id ?? "surat-umum";
-  const template = getTemplate(templateId);
-  const templateData = (surat.template_data ?? {}) as TemplateData;
+export default function UniversalLayout({ surat, variant }: UniversalLayoutProps) {
+  // If template_id exists, it's a UUID from letter_templates
+  // We don't have layout_type stored in surat_keluar, so we need to fetch it
+  // For now, we'll use default "umum" layout
+  // TODO: Store layout_type in surat_keluar or join with letter_templates
+
+  const layoutType = "umum" as LayoutType; // Default layout
+  const layoutConfig = LAYOUT_CONFIG[layoutType];
 
   return (
     <>
-      <KopSurat lembaga={surat.lembaga} variant="pkbm" />
+      <KopSurat lembaga={surat.lembaga} variant={variant} />
 
-      {/* Meta — only show if template doesn't have judulTengah */}
-      {!template.struktur.judulTengah && (
+      {!layoutConfig.features.judulTengah && (
         <SuratMeta
           nomorSurat={surat.nomor_surat}
           perihal={surat.perihal}
@@ -30,15 +35,13 @@ export default function PKBMLayout({ surat }: PKBMLayoutProps) {
         />
       )}
 
-      {/* Kepada block — only show if template uses it */}
-      {template.struktur.pakaiKepada && surat.kepada && surat.kepada !== "-" && (
+      {layoutConfig.features.pakaiKepada && surat.kepada && surat.kepada !== "-" && (
         <div className="surat-tujuan mt-5">
           <p>Kepada Yth.</p>
           <p>{surat.kepada}</p>
           {surat.alamat_tujuan && (
             <p>
-              di{" "}
-              <span style={{ marginLeft: "1em" }}>{surat.alamat_tujuan}</span>
+              di <span style={{ marginLeft: "1em" }}>{surat.alamat_tujuan}</span>
             </p>
           )}
         </div>
@@ -46,9 +49,7 @@ export default function PKBMLayout({ surat }: PKBMLayoutProps) {
 
       <SuratBody
         isiSurat={surat.isi_surat}
-        templateId={templateId}
-        templateData={templateData}
-        lembaga={surat.lembaga}
+        layoutType={layoutType}
         nomorSurat={surat.nomor_surat}
       />
 
@@ -58,7 +59,7 @@ export default function PKBMLayout({ surat }: PKBMLayoutProps) {
         lembaga={surat.lembaga}
       />
 
-      {template.struktur.pakaiTembusan &&
+      {layoutConfig.features.pakaiTembusan &&
         surat.tembusan &&
         surat.tembusan.length > 0 && (
           <TembusanList tembusan={surat.tembusan} />

@@ -1,45 +1,27 @@
 import { SURAT_TYPOGRAPHY } from "@/constants";
-import { getTemplate } from "@/constants/template-registry";
-import type { Lembaga } from "@/types";
-import type { TemplateData } from "@/types/template";
-import { composeBodyFromTemplate } from "@/lib/template-composer";
+import { LAYOUT_CONFIG } from "@/types/template";
+import type { LayoutType } from "@/types/template";
 
 interface SuratBodyProps {
   isiSurat: string;
-  templateId?: string | null;
-  templateData?: TemplateData | null;
-  lembaga?: Lembaga | null;
+  layoutType?: LayoutType;
   nomorSurat?: string;
 }
 
 export default function SuratBody({
   isiSurat,
-  templateId,
-  templateData,
-  lembaga,
+  layoutType = "umum",
   nomorSurat,
 }: SuratBodyProps) {
-  const tplId = templateId ?? "surat-umum";
-  const template = getTemplate(tplId);
-  const tplData = (templateData ?? {}) as TemplateData;
-
-  // For structured templates, compose body from template data
-  const bodyHtml =
-    template.bodyComposer === "structured" && lembaga
-      ? composeBodyFromTemplate(tplId, tplData, lembaga, isiSurat)
-      : isiSurat;
-
-  // Determine pembuka and penutup from template
-  const pembuka = template.struktur.pembuka;
-  const penutup = template.struktur.penutup;
+  const layout = LAYOUT_CONFIG[layoutType];
 
   return (
     <div className="surat-body" style={{ marginTop: "5mm" }}>
-      {/* Judul Tengah (for Surat Keterangan, Surat Tugas) */}
-      {template.struktur.judulTengah && (
+      {/* Judul Tengah (for Surat Keterangan) */}
+      {layout.features.judulTengah && (
         <div style={{ textAlign: "center", marginBottom: "3mm" }}>
           <p style={{ fontWeight: "bold", fontSize: "12pt" }}>
-            {template.struktur.judulTengah}
+            SURAT KETERANGAN
           </p>
           {nomorSurat && (
             <p style={{ fontSize: "12pt" }}>Nomor: {nomorSurat}</p>
@@ -48,15 +30,15 @@ export default function SuratBody({
       )}
 
       {/* Pembuka */}
-      <p style={{ textIndent: template.struktur.judulTengah ? undefined : SURAT_TYPOGRAPHY.paragraphIndent }}>
-        {pembuka}
+      <p style={{ textIndent: layout.features.judulTengah ? undefined : SURAT_TYPOGRAPHY.paragraphIndent }}>
+        {layout.pembuka}
       </p>
 
       {/* Body Content */}
       <div
         className="surat-content text-justify leading-relaxed"
         style={{ marginTop: "3mm" }}
-        dangerouslySetInnerHTML={{ __html: bodyHtml }}
+        dangerouslySetInnerHTML={{ __html: isiSurat }}
       />
 
       {/* Penutup */}
@@ -66,7 +48,7 @@ export default function SuratBody({
           marginTop: "3mm",
         }}
       >
-        {penutup}
+        {layout.penutup}
       </p>
     </div>
   );

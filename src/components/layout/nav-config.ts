@@ -2,6 +2,7 @@ import {
   FileText,
   Building2,
   Users,
+  FileStack,
   type LucideIcon,
 } from "lucide-react";
 
@@ -39,6 +40,12 @@ export const adminNavItems: NavItem[] = [
 ];
 
 export const adminManageItems: NavItem[] = [
+  {
+    title: "Template Surat",
+    href: "/admin/templates",
+    icon: FileStack,
+    adminOnly: true,
+  },
   {
     title: "Lembaga",
     href: "/admin/lembaga",

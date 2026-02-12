@@ -44,7 +44,6 @@ export default function SuratListPage() {
   const { lembagas } = useLembagaList();
   const { can } = usePermissions();
 
-  // Client-side filter by status & search
   const filteredSurats = useMemo(() => {
     let result = surats;
 
@@ -91,7 +90,6 @@ export default function SuratListPage() {
         )}
       </PageHeader>
 
-      {/* Filter & Search */}
       <Card>
         <CardContent className="pt-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -130,16 +128,13 @@ export default function SuratListPage() {
               <SelectContent>
                 <SelectItem value="all">Semua Status</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="approved">Disetujui</SelectItem>
-                <SelectItem value="sent">Terkirim</SelectItem>
-                <SelectItem value="archived">Diarsipkan</SelectItem>
+                <SelectItem value="final">Final</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Table */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Spinner />
@@ -199,7 +194,7 @@ export default function SuratListPage() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      {can.updateSurat && surat.status === "draft" && (
+                      {can.updateSurat && (
                         <Button
                           variant="ghost"
                           size="icon"

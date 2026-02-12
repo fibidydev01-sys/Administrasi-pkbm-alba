@@ -89,7 +89,6 @@ export interface Database {
           pdf_generated_at: string | null;
           status: string;
           template_id: string | null;
-          template_data: Json | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -114,7 +113,6 @@ export interface Database {
           pdf_generated_at?: string | null;
           status?: string;
           template_id?: string | null;
-          template_data?: Json | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -139,7 +137,6 @@ export interface Database {
           pdf_generated_at?: string | null;
           status?: string;
           template_id?: string | null;
-          template_data?: Json | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -275,6 +272,49 @@ export interface Database {
           description?: string | null;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      letter_templates: {
+        Row: {
+          id: string;
+          name: string;
+          layout_type: string;
+          perihal: string | null;
+          isi_surat: string;
+          sifat: string;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+          deleted_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          layout_type: string;
+          perihal?: string | null;
+          isi_surat: string;
+          sifat?: string;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          layout_type?: string;
+          perihal?: string | null;
+          isi_surat?: string;
+          sifat?: string;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
         };
         Relationships: [];
       };

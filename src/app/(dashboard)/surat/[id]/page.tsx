@@ -45,10 +45,10 @@ export default function SuratDetailPage({ params }: { params: Promise<{ id: stri
 
   async function handleApprove() {
     try {
-      await updateSurat(id, { status: "approved" });
-      toast.success("Surat berhasil disetujui");
+      await updateSurat(id, { status: "final" });
+      toast.success("Surat berhasil ditandai selesai");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Gagal menyetujui surat";
+      const message = err instanceof Error ? err.message : "Gagal menandai surat selesai";
       toast.error(message);
     }
   }
@@ -77,10 +77,10 @@ export default function SuratDetailPage({ params }: { params: Promise<{ id: stri
           {can.approveSurat && surat.status === "draft" && (
             <Button variant="default" onClick={handleApprove}>
               <CheckCircle className="h-4 w-4 mr-2" />
-              Setujui
+              Tandai Selesai
             </Button>
           )}
-          {can.updateSurat && surat.status === "draft" && (
+          {can.updateSurat && (
             <Link href={ROUTES.SURAT_EDIT(id)}>
               <Button variant="outline">
                 <Pencil className="h-4 w-4 mr-2" />
@@ -110,7 +110,6 @@ export default function SuratDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       </PageHeader>
 
-      {/* Info Card */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Informasi Surat</CardTitle>

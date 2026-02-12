@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 
-import { suratSchema, type SuratFormData, validateTemplateFields } from "@/lib/validators";
+import { suratSchema, type SuratFormData } from "@/lib/validators";
 import { useSurat, useLembagaList } from "@/hooks";
-import { SURAT_SIFAT_OPTIONS, ROUTES, getTemplate } from "@/constants";
+import { SURAT_SIFAT_OPTIONS, ROUTES } from "@/constants";
+import { LAYOUT_CONFIG } from "@/types/template";
+import { getTemplateFields, composeBody } from "@/lib/template-parser";
+import type { LayoutType, LetterTemplate } from "@/types/template";
 import { getToday } from "@/lib/date";
 import type { SuratSifat } from "@/types";
 
@@ -26,8 +29,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import TembusanInput from "./tembusan-input";
-import TemplateSelector from "./template-selector";
-import TemplateFields from "./template-fields";
+import TemplateSelectorDB from "./template-selector-db";
+import TemplateDynamicForm from "./template-dynamic-form";
 
 interface SuratFormProps {
   mode: "create" | "edit";
@@ -38,7 +41,10 @@ interface SuratFormProps {
 export default function SuratForm({ mode, suratId, defaultValues }: SuratFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [templateFieldErrors, setTemplateFieldErrors] = useState<Record<string, string>>({});
+  const [selectedTemplate, setSelectedTemplate] = useState<LetterTemplate | null>(null);
+  const [templateFieldValues, setTemplateFieldValues] = useState<Record<string, string>>({});
+  const [tembusanList, setTembusanList] = useState<string[]>([]);
+
   const { createSurat, updateSurat } = useSurat(suratId);
   const { lembagas, loading: lembagaLoading } = useLembagaList();
 
@@ -59,112 +65,127 @@ export default function SuratForm({ mode, suratId, defaultValues }: SuratFormPro
       lampiran: "",
       sifat: "Biasa",
       tanggal_surat: getToday(),
-      tembusan: [],
-      template_id: "surat-umum",
-      template_data: {},
+      template_id: undefined,
       ...defaultValues,
     },
   });
 
-  const tembusanValue = watch("tembusan") ?? [];
-  const templateId = watch("template_id") ?? "surat-umum";
-  const templateData = watch("template_data") ?? {};
-  const currentTemplate = getTemplate(templateId);
+  const currentLayoutType = selectedTemplate?.layout_type as LayoutType | undefined;
+  const layoutConfig = currentLayoutType && LAYOUT_CONFIG[currentLayoutType]
+    ? LAYOUT_CONFIG[currentLayoutType]
+    : null;
 
   /**
-   * Handle template change: apply defaults, reset template_data, confirm if switching.
+   * Handle template selection
    */
   const handleTemplateChange = useCallback(
-    (newTemplateId: string) => {
-      const hasExistingData = Object.values(templateData).some((v) => v && v.trim() !== "");
+    (template: LetterTemplate | null) => {
+      if (!template) {
+        setSelectedTemplate(null);
+        setTemplateFieldValues({});
+        setValue("template_id", undefined);
+        setValue("perihal", "");
+        setValue("isi_surat", "");
+        setValue("sifat", "Biasa");
+        return;
+      }
 
-      if (hasExistingData && newTemplateId !== templateId) {
+      // Confirm if user has data
+      const currentPerihal = watch("perihal");
+      const currentIsi = watch("isi_surat");
+      const hasData = currentPerihal || currentIsi;
+
+      if (hasData && mode === "create") {
         const confirmed = window.confirm(
-          "Ganti template? Data field template sebelumnya akan direset."
+          "Ganti template? Data yang sudah diisi akan diganti."
         );
         if (!confirmed) return;
       }
 
-      const newTemplate = getTemplate(newTemplateId);
+      // Set template
+      setSelectedTemplate(template);
+      setValue("template_id", template.id);
 
-      // Set template_id
-      setValue("template_id", newTemplateId);
-
-      // Reset template_data
-      setValue("template_data", {});
-      setTemplateFieldErrors({});
-
-      // Apply defaults
-      if (newTemplate.defaults.perihal) {
-        setValue("perihal", newTemplate.defaults.perihal, { shouldValidate: true });
+      // Auto-fill from template
+      if (template.perihal) {
+        setValue("perihal", template.perihal, { shouldValidate: true });
       }
-      if (newTemplate.defaults.sifat) {
-        setValue("sifat", newTemplate.defaults.sifat, { shouldValidate: true });
-      }
-      if (newTemplate.defaults.lampiran) {
-        setValue("lampiran", newTemplate.defaults.lampiran);
-      }
+      setValue("sifat", template.sifat as SuratSifat, { shouldValidate: true });
 
-      // For templates that don't use "Kepada", set a default or clear
-      if (!newTemplate.struktur.pakaiKepada) {
+      // Initialize empty field values
+      const fields = getTemplateFields(template.isi_surat);
+      const initialValues: Record<string, string> = {};
+      fields.forEach((field) => {
+        initialValues[field.fieldName] = "";
+      });
+      setTemplateFieldValues(initialValues);
+
+      // Set kepada based on layout
+      const layout = LAYOUT_CONFIG[template.layout_type as LayoutType];
+      if (layout && !layout.features.pakaiKepada) {
         setValue("kepada", "-");
       } else {
-        // Only clear if currently set to the placeholder
         const currentKepada = watch("kepada");
         if (currentKepada === "-") {
           setValue("kepada", "");
         }
       }
 
-      // For structured templates, isi_surat is composed automatically
-      if (newTemplate.bodyComposer === "structured") {
-        setValue("isi_surat", "");
-      }
+      toast.success(`Template "${template.name}" diterapkan`);
     },
-    [templateId, templateData, setValue, watch]
+    [setValue, watch, mode]
   );
 
   /**
-   * Handle template field value change.
+   * Handle template field value change
    */
-  const handleTemplateFieldChange = useCallback(
-    (fieldName: string, value: string) => {
-      const current = watch("template_data") ?? {};
-      setValue("template_data", { ...current, [fieldName]: value });
-
-      // Clear error for this field
-      if (templateFieldErrors[fieldName]) {
-        setTemplateFieldErrors((prev) => {
-          const next = { ...prev };
-          delete next[fieldName];
-          return next;
-        });
-      }
-    },
-    [setValue, watch, templateFieldErrors]
-  );
+  const handleTemplateFieldChange = (fieldName: string, value: string) => {
+    setTemplateFieldValues((prev) => ({
+      ...prev,
+      [fieldName]: value,
+    }));
+  };
 
   async function onSubmit(data: SuratFormData) {
-    // Validate template-specific required fields
-    const tplErrors = validateTemplateFields(
-      data.template_id ?? "surat-umum",
-      data.template_data ?? {}
-    );
-    if (Object.keys(tplErrors).length > 0) {
-      setTemplateFieldErrors(tplErrors);
-      toast.error("Lengkapi semua field template yang wajib diisi");
-      return;
-    }
-
     try {
       setIsSubmitting(true);
 
+      // Validate template selected (create mode only)
+      if (mode === "create" && !selectedTemplate) {
+        toast.error("Template wajib dipilih!");
+        return;
+      }
+
+      // Compose isi_surat from template ONLY in create mode
+      let finalIsiSurat = data.isi_surat;
+      if (mode === "create" && selectedTemplate) {
+        finalIsiSurat = composeBody(selectedTemplate.isi_surat, templateFieldValues);
+      }
+      // In edit mode, use isi_surat directly from form (textarea)
+
+      const submitData = {
+        ...data,
+        isi_surat: finalIsiSurat,
+      };
+
       if (mode === "create") {
-        const result = await createSurat(data);
+        const result = await createSurat(submitData);
+
+        // Create tembusan separately
+        if (tembusanList.length > 0) {
+          const { createTembusan } = await import("@/lib/tembusan-helper");
+          await createTembusan(result.data.id, tembusanList);
+        }
+
         toast.success("Surat berhasil dibuat");
         router.push(ROUTES.SURAT_DETAIL(result.data.id));
       } else if (suratId) {
-        await updateSurat(suratId, data);
+        await updateSurat(suratId, submitData);
+
+        // Update tembusan separately
+        const { updateTembusan } = await import("@/lib/tembusan-helper");
+        await updateTembusan(suratId, tembusanList);
+
         toast.success("Surat berhasil diperbarui");
         router.push(ROUTES.SURAT_DETAIL(suratId));
       }
@@ -191,6 +212,43 @@ export default function SuratForm({ mode, suratId, defaultValues }: SuratFormPro
           <CardTitle>{mode === "create" ? "Buat Surat Baru" : "Edit Surat"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Template Selector - REQUIRED! */}
+          {mode === "create" && (
+            <TemplateSelectorDB
+              value={selectedTemplate?.id}
+              onTemplateSelect={handleTemplateChange}
+            />
+          )}
+
+          {/* Show error if no template selected */}
+          {mode === "create" && !selectedTemplate && (
+            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
+              <p className="text-sm text-destructive font-medium">
+                ⚠️ Template wajib dipilih untuk membuat surat
+              </p>
+            </div>
+          )}
+
+          {/* Show layout info if template selected */}
+          {selectedTemplate && layoutConfig && (
+            <div className="rounded-lg border p-3 bg-muted/50">
+              <p className="text-sm font-medium mb-2">
+                Layout: {layoutConfig.label}
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>
+                  • Judul tengah: {layoutConfig.features.judulTengah ? "✅ Ada" : "❌ Tidak"}
+                </li>
+                <li>
+                  • Kepada Yth: {layoutConfig.features.pakaiKepada ? "✅ Ada" : "❌ Tidak"}
+                </li>
+                <li>
+                  • Tembusan: {layoutConfig.features.pakaiTembusan ? "✅ Ada" : "❌ Tidak"}
+                </li>
+              </ul>
+            </div>
+          )}
+
           {/* Lembaga */}
           <div className="space-y-2">
             <Label htmlFor="lembaga_id">Lembaga *</Label>
@@ -214,22 +272,6 @@ export default function SuratForm({ mode, suratId, defaultValues }: SuratFormPro
             )}
           </div>
 
-          {/* Template Selector */}
-          <TemplateSelector
-            value={templateId}
-            onChange={handleTemplateChange}
-          />
-
-          {/* Template Dynamic Fields */}
-          {currentTemplate.fields.length > 0 && (
-            <TemplateFields
-              templateId={templateId}
-              templateData={templateData}
-              onChange={handleTemplateFieldChange}
-              errors={templateFieldErrors}
-            />
-          )}
-
           {/* Perihal */}
           <div className="space-y-2">
             <Label htmlFor="perihal">Perihal *</Label>
@@ -237,10 +279,15 @@ export default function SuratForm({ mode, suratId, defaultValues }: SuratFormPro
             {errors.perihal && (
               <p className="text-sm text-destructive">{errors.perihal.message}</p>
             )}
+            {selectedTemplate && (
+              <p className="text-xs text-muted-foreground">
+                Dari template, bisa diubah sesuai kebutuhan
+              </p>
+            )}
           </div>
 
-          {/* Kepada — only show if template uses it */}
-          {currentTemplate.struktur.pakaiKepada && (
+          {/* Kepada - only if layout uses it */}
+          {(!layoutConfig || layoutConfig.features.pakaiKepada) && (
             <div className="space-y-2">
               <Label htmlFor="kepada">Kepada (Tujuan)</Label>
               <Input id="kepada" {...register("kepada")} placeholder="Nama penerima surat" />
@@ -250,8 +297,8 @@ export default function SuratForm({ mode, suratId, defaultValues }: SuratFormPro
             </div>
           )}
 
-          {/* Alamat Tujuan — only show if template uses "Kepada" */}
-          {currentTemplate.struktur.pakaiKepada && (
+          {/* Alamat Tujuan - only if layout uses kepada */}
+          {(!layoutConfig || layoutConfig.features.pakaiKepada) && (
             <div className="space-y-2">
               <Label htmlFor="alamat_tujuan">Alamat Tujuan</Label>
               <Input
@@ -288,6 +335,11 @@ export default function SuratForm({ mode, suratId, defaultValues }: SuratFormPro
                 ))}
               </SelectContent>
             </Select>
+            {selectedTemplate && (
+              <p className="text-xs text-muted-foreground">
+                Dari template, bisa diubah sesuai kebutuhan
+              </p>
+            )}
           </div>
 
           {/* Lampiran */}
@@ -296,29 +348,57 @@ export default function SuratForm({ mode, suratId, defaultValues }: SuratFormPro
             <Input id="lampiran" {...register("lampiran")} placeholder="Keterangan lampiran" />
           </div>
 
-          {/* Isi Surat — only show for freeform templates */}
-          {currentTemplate.bodyComposer === "freeform" && (
+          {/* Dynamic Form from Template OR Editable Textarea */}
+          {mode === "create" && selectedTemplate ? (
             <div className="space-y-2">
-              <Label htmlFor="isi_surat">Isi Surat</Label>
+              <Label>Isi Surat (dari template)</Label>
+              <Card>
+                <CardContent className="pt-6">
+                  <TemplateDynamicForm
+                    bodyTemplate={selectedTemplate.isi_surat}
+                    values={templateFieldValues}
+                    onChange={handleTemplateFieldChange}
+                  />
+                </CardContent>
+              </Card>
+              <p className="text-xs text-muted-foreground">
+                Isi field di atas, body surat akan ter-compose otomatis
+              </p>
+            </div>
+          ) : mode === "create" ? (
+            <div className="space-y-2">
+              <Label>Isi Surat</Label>
+              <div className="rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Pilih template terlebih dahulu untuk mulai mengisi surat
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="isi_surat">Isi Surat *</Label>
               <Textarea
                 id="isi_surat"
                 {...register("isi_surat")}
-                placeholder="Tuliskan isi surat..."
-                rows={10}
+                placeholder="Isi surat..."
+                rows={16}
               />
               {errors.isi_surat && (
                 <p className="text-sm text-destructive">{errors.isi_surat.message}</p>
               )}
+              <p className="text-xs text-muted-foreground">
+                Mode edit: Anda dapat mengedit isi surat secara langsung
+              </p>
             </div>
           )}
 
-          {/* Tembusan — only show if template supports it */}
-          {currentTemplate.struktur.pakaiTembusan && (
+          {/* Tembusan - only if layout supports it */}
+          {(!layoutConfig || layoutConfig.features.pakaiTembusan) && (
             <div className="space-y-2">
               <Label>Tembusan</Label>
               <TembusanInput
-                value={tembusanValue}
-                onChange={(val) => setValue("tembusan", val)}
+                value={tembusanList}
+                onChange={setTembusanList}
               />
             </div>
           )}
@@ -327,7 +407,10 @@ export default function SuratForm({ mode, suratId, defaultValues }: SuratFormPro
 
       {/* Actions */}
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || (mode === "create" && !selectedTemplate)}
+        >
           {isSubmitting ? (
             <>
               <Spinner className="mr-2 h-4 w-4" />
@@ -339,6 +422,11 @@ export default function SuratForm({ mode, suratId, defaultValues }: SuratFormPro
             "Simpan Perubahan"
           )}
         </Button>
+        {mode === "create" && !selectedTemplate && (
+          <p className="text-xs text-muted-foreground">
+            Pilih template untuk melanjutkan
+          </p>
+        )}
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Batal
         </Button>

@@ -12,15 +12,13 @@ export type {
 } from "./database";
 
 export type {
-  TemplateId,
-  FieldType,
-  TemplateField,
-  TemplateKategori,
-  TemplateStruktur,
-  TemplateDataBlock,
-  TemplateConfig,
-  TemplateData,
+  LayoutType,
+  LetterTemplate,
+  LetterTemplateInsert,
+  LetterTemplateUpdate,
 } from "./template";
+
+export { LAYOUT_CONFIG } from "./template";
 
 import type { Tables, InsertDto, UpdateDto } from "./database";
 
@@ -44,6 +42,8 @@ export type UserProfileInsert = InsertDto<"user_profiles">;
 export type UserProfileUpdate = UpdateDto<"user_profiles">;
 
 export type RolePermission = Tables<"role_permissions">;
+
+export type LetterTemplateEntity = Tables<"letter_templates">;
 
 // =============================================
 // Role Types
@@ -81,7 +81,7 @@ export type Permissions = {
 // =============================================
 
 export type SuratSifat = "Biasa" | "Penting" | "Segera" | "Rahasia";
-export type SuratStatus = "draft" | "approved" | "sent" | "archived";
+export type SuratStatus = "draft" | "final";
 
 export type SnapshotTTD = {
   jabatan: string | null;
@@ -136,9 +136,9 @@ export type SuratFormData = {
   isi_surat?: string;
   lampiran?: string;
   sifat?: SuratSifat;
-  tembusan?: string[];
-  template_id?: string;
-  template_data?: Record<string, string>;
+  tanggal_surat?: string;
+  template_id?: string; // Now references letter_templates.id (UUID)
+  // tembusan handled separately via surat_tembusan table
 };
 
 // =============================================

@@ -4,6 +4,10 @@
  */
 
 export { LoadingSpinner, FullPageLoader, CardLoader } from "./loading-spinner";
+export { FormField } from "./form-field";
+export { DataTable } from "./data-table";
+export type { Column } from "./data-table";
+export { LoadingWrapper } from "./loading-wrapper";
 export { EmptyState } from "./empty-state";
 export { PageHeader } from "./page-header";
 export { StatusBadge } from "./status-badge";
