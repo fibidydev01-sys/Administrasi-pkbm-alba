@@ -10,7 +10,7 @@ import { Pencil, Trash2, ArrowLeft } from "lucide-react";
 import { useTemplate } from "@/hooks/use-template";
 import { LAYOUT_CONFIG } from "@/types/template";
 import type { LayoutType } from "@/types/template";
-
+import { TemplatePreviewModal } from "@/components/features/templates";
 import { PageHeader, DeleteConfirmDialog, FullPageLoader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +57,9 @@ export default function TemplateDetailPage({ params }: { params: Promise<{ id: s
     <div className="space-y-6">
       <PageHeader title="Detail Template" description={template.name}>
         <div className="flex items-center gap-2">
+          {/* NEW: Preview PDF Button */}
+          <TemplatePreviewModal template={template} />
+
           <Link href={`/admin/templates/${id}/edit`}>
             <Button variant="outline">
               <Pencil className="h-4 w-4 mr-2" />

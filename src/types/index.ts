@@ -91,14 +91,19 @@ export type SnapshotTTD = {
   captured_at: string;
 };
 
+/**
+ * Surat with related data (lembaga, tembusan, etc)
+ */
 export interface SuratWithRelations extends Surat {
   lembaga: Lembaga;
   tembusan: Tembusan[];
+  layout_type?: string; // Layout type from template (keterangan|undangan|umum)
   created_by_profile?: {
     full_name: string;
     role: string;
   };
 }
+
 
 // =============================================
 // Auth Types

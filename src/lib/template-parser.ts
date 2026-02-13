@@ -1,7 +1,16 @@
 /**
- * Template Parser
- * Parse body_template with {{table}} and [Isi X] markers
+ * Template Parser - COMPLETE VERSION
+ * Handles {{table}} markers and [Isi X] field replacements
+ * 
+ * MERGED:
+ * - parseTemplate() for dynamic form rendering (from original)
+ * - composeBody() with robust regex parsing (from fix)
+ * - getTemplateFields() helper
  */
+
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
 
 export interface TableRow {
   label: string;
@@ -20,6 +29,17 @@ export interface ParsedTemplate {
   fields: Map<string, { label: string; marker: string }>;
 }
 
+export interface TemplateField {
+  fieldName: string;
+  label: string;
+  marker: string;
+  isTableRow?: boolean;
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
 /**
  * Extract field name from marker
  * "[Isi nama]" → "nama"
@@ -31,8 +51,13 @@ function extractFieldName(marker: string): string {
   return match[1].toLowerCase().replace(/\s+/g, "_");
 }
 
+// ============================================================================
+// PARSE TEMPLATE (For Dynamic Form Rendering)
+// ============================================================================
+
 /**
  * Parse template body into sections
+ * Used by TemplateDynamicForm to render form fields
  */
 export function parseTemplate(bodyTemplate: string): ParsedTemplate {
   const sections: TemplateSection[] = [];
@@ -113,8 +138,19 @@ export function parseTemplate(bodyTemplate: string): ParsedTemplate {
   return { sections, fields };
 }
 
+// ============================================================================
+// COMPOSE BODY (For PDF/Preview Generation - FIXED VERSION!)
+// ============================================================================
+
 /**
  * Compose final body by replacing markers with values
+ * 
+ * FIXED: Uses regex-first approach for robust table row parsing
+ * 
+ * Process:
+ * 1. Remove {{table_start}} and {{table_end}} markers
+ * 2. Replace table rows: "Label|[Isi X]" → "Label            : Value"
+ * 3. Replace inline markers: "[Isi X]" → "Value"
  */
 export function composeBody(
   bodyTemplate: string,
@@ -122,45 +158,105 @@ export function composeBody(
 ): string {
   let result = bodyTemplate;
 
-  // Remove table markers
+  // Step 1: Remove table markers
   result = result.replace(/{{table_start}}\n?/g, "");
   result = result.replace(/{{table_end}}\n?/g, "");
 
-  // Replace table rows (Label|[Isi X]) with (Label: Value)
-  Object.entries(values).forEach(([fieldName, value]) => {
-    // For table format: "Label|[Isi X]" → "Label: Value"
-    const tableRowRegex = new RegExp(
-      `^(.+?)\\|\\[Isi ${fieldName.replace(/_/g, " ")}\\]$`,
-      "gm"
-    );
-    result = result.replace(tableRowRegex, (_, label) => {
-      // Pad label to 25 chars for alignment
-      const paddedLabel = label.padEnd(25);
-      return `${paddedLabel}: ${value}`;
-    });
+  // Step 2: Replace table rows with formatted output
+  // 🔥 FIX: Regex-first approach (parse from template, not from values)
+  // Pattern: "Label|[Isi X]" on its own line
+  // Output: "Label                    : Value" (padded to 25 chars)
+  result = result.replace(
+    /^(.+?)\|\[Isi ([^\]]+)\]$/gm,
+    (match, label, fieldText) => {
+      // Normalize field name: "Nama Kegiatan" → "nama_kegiatan"
+      const fieldName = fieldText.toLowerCase().replace(/\s+/g, "_");
+      const value = values[fieldName];
 
-    // For inline format: "[Isi X]" → "Value"
-    const inlineMarkerRegex = new RegExp(
-      `\\[Isi ${fieldName.replace(/_/g, " ")}\\]`,
-      "g"
-    );
-    result = result.replace(inlineMarkerRegex, value);
-  });
+      if (value) {
+        // Pad label to 25 characters for alignment
+        const paddedLabel = label.trim().padEnd(25);
+        return `${paddedLabel}: ${value}`;
+      }
+
+      // If no value, keep original marker (for debugging)
+      return match;
+    }
+  );
+
+  // Step 3: Replace inline markers
+  // Pattern: "[Isi X]" anywhere in text
+  // Output: Just the value (no label)
+  result = result.replace(
+    /\[Isi ([^\]]+)\]/g,
+    (match, fieldText) => {
+      // Normalize field name
+      const fieldName = fieldText.toLowerCase().replace(/\s+/g, "_");
+      const value = values[fieldName];
+
+      // Return value or keep marker if not found
+      return value || match;
+    }
+  );
 
   return result;
 }
 
+// ============================================================================
+// GET TEMPLATE FIELDS (Helper for extracting all fields)
+// ============================================================================
+
 /**
  * Get all field definitions from template
+ * Used by template-sample-data to generate preview data
  */
-export function getTemplateFields(bodyTemplate: string): Array<{
-  fieldName: string;
-  label: string;
-  marker: string;
-}> {
+export function getTemplateFields(bodyTemplate: string): TemplateField[] {
   const { fields } = parseTemplate(bodyTemplate);
   return Array.from(fields.entries()).map(([fieldName, info]) => ({
     fieldName,
-    ...info,
+    label: info.label,
+    marker: info.marker,
   }));
+}
+
+// ============================================================================
+// VALIDATION HELPERS
+// ============================================================================
+
+/**
+ * Parse template to check if it uses table format
+ */
+export function hasTableFormat(bodyTemplate: string): boolean {
+  return (
+    bodyTemplate.includes("{{table_start}}") ||
+    bodyTemplate.includes("{{table_end}}")
+  );
+}
+
+/**
+ * Validate template syntax
+ * Returns array of issues found (empty if valid)
+ */
+export function validateTemplate(bodyTemplate: string): string[] {
+  const issues: string[] = [];
+
+  // Check balanced table markers
+  const startCount = (bodyTemplate.match(/{{table_start}}/g) || []).length;
+  const endCount = (bodyTemplate.match(/{{table_end}}/g) || []).length;
+
+  if (startCount !== endCount) {
+    issues.push(
+      `Unbalanced table markers: ${startCount} start, ${endCount} end`
+    );
+  }
+
+  // Check for invalid markers
+  const invalidMarkers = bodyTemplate.match(
+    /{{(?!table_start|table_end)[^}]+}}/g
+  );
+  if (invalidMarkers) {
+    issues.push(`Invalid markers found: ${invalidMarkers.join(", ")}`);
+  }
+
+  return issues;
 }

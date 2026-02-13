@@ -14,12 +14,8 @@ interface UniversalLayoutProps {
 }
 
 export default function UniversalLayout({ surat, variant }: UniversalLayoutProps) {
-  // If template_id exists, it's a UUID from letter_templates
-  // We don't have layout_type stored in surat_keluar, so we need to fetch it
-  // For now, we'll use default "umum" layout
-  // TODO: Store layout_type in surat_keluar or join with letter_templates
-
-  const layoutType = "umum" as LayoutType; // Default layout
+  // 🔥 FIXED: Get layout_type from surat object (stored at creation time)
+  const layoutType = (surat.layout_type as LayoutType) || "umum";
   const layoutConfig = LAYOUT_CONFIG[layoutType];
 
   return (

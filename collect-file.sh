@@ -67,16 +67,18 @@ echo ""
 echo -e "${BOLD}1.${NC} ✉️  ${GREEN}SURAT${NC} - Manajemen surat menyurat"
 echo -e "${BOLD}2.${NC} 🏢 ${GREEN}LEMBAGA${NC} - Manajemen organisasi/institusi"
 echo -e "${BOLD}3.${NC} 🔐 ${GREEN}AUTH & USER${NC} - Authentication & manajemen pengguna"
-echo -e "${BOLD}4.${NC} 📦 ${GREEN}ALL${NC} - Semua fitur (Surat + Lembaga + Auth)"
-echo -e "${BOLD}5.${NC} 🎯 ${GREEN}CUSTOM${NC} - Pilih kombinasi fitur"
+echo -e "${BOLD}4.${NC} 📋 ${GREEN}TEMPLATES${NC} - Manajemen template surat"
+echo -e "${BOLD}5.${NC} 📦 ${GREEN}ALL${NC} - Semua fitur"
+echo -e "${BOLD}6.${NC} 🎯 ${GREEN}CUSTOM${NC} - Pilih kombinasi fitur"
 echo -e "${BOLD}0.${NC} ❌ ${RED}EXIT${NC}"
 echo ""
-echo -ne "${BOLD}${YELLOW}Pilihan Anda [0-5]: ${NC}"
+echo -ne "${BOLD}${YELLOW}Pilihan Anda [0-6]: ${NC}"
 read choice
 
 COLLECT_SURAT=false
 COLLECT_LEMBAGA=false
 COLLECT_AUTH=false
+COLLECT_TEMPLATES=false
 
 case $choice in
     1)
@@ -92,15 +94,20 @@ case $choice in
         echo -e "${GREEN}✓ Collecting: AUTH & USER${NC}"
         ;;
     4)
+        COLLECT_TEMPLATES=true
+        echo -e "${GREEN}✓ Collecting: TEMPLATES${NC}"
+        ;;
+    5)
         COLLECT_SURAT=true
         COLLECT_LEMBAGA=true
         COLLECT_AUTH=true
+        COLLECT_TEMPLATES=true
         echo -e "${GREEN}✓ Collecting: ALL FEATURES${NC}"
         ;;
-    5)
+    6)
         echo ""
-        echo -e "${BOLD}${CYAN}Pilih fitur (pisahkan dengan spasi, contoh: 1 3):${NC}"
-        echo -e "1. SURAT  2. LEMBAGA  3. AUTH"
+        echo -e "${BOLD}${CYAN}Pilih fitur (pisahkan dengan spasi, contoh: 1 3 4):${NC}"
+        echo -e "1. SURAT  2. LEMBAGA  3. AUTH  4. TEMPLATES"
         echo -ne "${BOLD}${YELLOW}Fitur: ${NC}"
         read -a features
         
@@ -109,6 +116,7 @@ case $choice in
                 1) COLLECT_SURAT=true; echo -e "${GREEN}✓ Added: SURAT${NC}" ;;
                 2) COLLECT_LEMBAGA=true; echo -e "${GREEN}✓ Added: LEMBAGA${NC}" ;;
                 3) COLLECT_AUTH=true; echo -e "${GREEN}✓ Added: AUTH${NC}" ;;
+                4) COLLECT_TEMPLATES=true; echo -e "${GREEN}✓ Added: TEMPLATES${NC}" ;;
             esac
         done
         ;;
@@ -133,18 +141,30 @@ echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━
 echo -e "${BOLD}${BLUE}📁 CORE FILES (Always Included)${NC}"
 echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-# Constants
+echo ""
+echo -e "${CYAN}  📄 Root App Files${NC}"
+collect_file "$CLIENT_ROOT/app/layout.tsx"
+collect_file "$CLIENT_ROOT/app/page.tsx"
+collect_file "$CLIENT_ROOT/app/globals.css"
+collect_file "$CLIENT_ROOT/app/loading.tsx"
+collect_file "$CLIENT_ROOT/app/error.tsx"
+collect_file "$CLIENT_ROOT/app/not-found.tsx"
+
+echo ""
+echo -e "${CYAN}  ⚙️  Constants${NC}"
 collect_file "$CLIENT_ROOT/constants/index.ts"
 collect_file "$CLIENT_ROOT/constants/paper-config.ts"
 collect_file "$CLIENT_ROOT/constants/permissions.ts"
 collect_file "$CLIENT_ROOT/constants/routes.ts"
 
-# Hooks (generic)
+echo ""
+echo -e "${CYAN}  🎣 Hooks (Generic)${NC}"
 collect_file "$CLIENT_ROOT/hooks/index.ts"
 collect_file "$CLIENT_ROOT/hooks/use-media-query.ts"
 collect_file "$CLIENT_ROOT/hooks/use-permissions.ts"
 
-# Lib
+echo ""
+echo -e "${CYAN}  📚 Libraries${NC}"
 collect_file "$CLIENT_ROOT/lib/date/index.ts"
 collect_file "$CLIENT_ROOT/lib/format/index.ts"
 collect_file "$CLIENT_ROOT/lib/supabase/client.ts"
@@ -153,21 +173,25 @@ collect_file "$CLIENT_ROOT/lib/supabase/server.ts"
 collect_file "$CLIENT_ROOT/lib/utils.ts"
 collect_file "$CLIENT_ROOT/lib/validators.ts"
 
-# Stores
+echo ""
+echo -e "${CYAN}  💾 Stores${NC}"
 collect_file "$CLIENT_ROOT/stores/index.ts"
 
-# Types
+echo ""
+echo -e "${CYAN}  📝 Types${NC}"
 collect_file "$CLIENT_ROOT/types/index.ts"
 collect_file "$CLIENT_ROOT/types/database.ts"
 
-# Layout Components (shared)
+echo ""
+echo -e "${CYAN}  🎨 Layout Components${NC}"
 collect_file "$CLIENT_ROOT/components/layout/index.ts"
 collect_file "$CLIENT_ROOT/components/layout/app-sidebar.tsx"
 collect_file "$CLIENT_ROOT/components/layout/header.tsx"
 collect_file "$CLIENT_ROOT/components/layout/mobile-nav.tsx"
 collect_file "$CLIENT_ROOT/components/layout/nav-config.ts"
 
-# Shared Components (Phase 1+2 updated)
+echo ""
+echo -e "${CYAN}  🔧 Shared Components${NC}"
 collect_file "$CLIENT_ROOT/components/shared/index.ts"
 collect_file "$CLIENT_ROOT/components/shared/avatar-display.tsx"
 collect_file "$CLIENT_ROOT/components/shared/confirm-dialog.tsx"
@@ -181,11 +205,16 @@ collect_file "$CLIENT_ROOT/components/shared/offline-detector.tsx"
 collect_file "$CLIENT_ROOT/components/shared/page-header.tsx"
 collect_file "$CLIENT_ROOT/components/shared/status-badge.tsx"
 
-# Dashboard layout
+echo ""
+echo -e "${CYAN}  🏠 Dashboard Layout${NC}"
 collect_file "$CLIENT_ROOT/app/(dashboard)/layout.tsx"
 
-# Root files
+echo ""
+echo -e "${CYAN}  🌐 Proxy${NC}"
 collect_file "$CLIENT_ROOT/proxy.ts"
+
+echo ""
+echo -e "${YELLOW}  ⏭️  SKIPPED: components/ui/* (shadcn auto-generated)${NC}"
 
 # ================================================
 # AUTH & USER MANAGEMENT
@@ -196,31 +225,38 @@ if [ "$COLLECT_AUTH" = true ]; then
     echo -e "${BOLD}${BLUE}🔐 AUTH & USER MANAGEMENT${NC}"
     echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     
-    # Auth routes
+    echo ""
+    echo -e "${CYAN}  🔑 Auth Routes${NC}"
     collect_file "$CLIENT_ROOT/app/(auth)/layout.tsx"
     collect_file "$CLIENT_ROOT/app/(auth)/login/page.tsx"
     collect_file "$CLIENT_ROOT/app/api/auth/callback/route.ts"
     
-    # Auth components
+    echo ""
+    echo -e "${CYAN}  🧩 Auth Components${NC}"
     collect_file "$CLIENT_ROOT/components/features/index.ts"
     collect_file "$CLIENT_ROOT/components/features/auth/index.ts"
     collect_file "$CLIENT_ROOT/components/features/auth/login-form.tsx"
     collect_file "$CLIENT_ROOT/components/features/auth/logout-button.tsx"
     
-    # Providers
+    echo ""
+    echo -e "${CYAN}  🎁 Providers${NC}"
     collect_file "$CLIENT_ROOT/components/providers/index.ts"
     collect_file "$CLIENT_ROOT/components/providers/auth-provider.tsx"
     
-    # Hooks
+    echo ""
+    echo -e "${CYAN}  🎣 Auth Hooks${NC}"
     collect_file "$CLIENT_ROOT/hooks/use-auth.ts"
     
-    # Stores
+    echo ""
+    echo -e "${CYAN}  💾 Auth Store${NC}"
     collect_file "$CLIENT_ROOT/stores/auth-store.ts"
     
-    # Admin - User Management
+    echo ""
+    echo -e "${CYAN}  👥 User Management${NC}"
     collect_file "$CLIENT_ROOT/app/(dashboard)/admin/pengguna/page.tsx"
     
-    # Profil
+    echo ""
+    echo -e "${CYAN}  👤 User Profile${NC}"
     collect_file "$CLIENT_ROOT/app/(dashboard)/profil/page.tsx"
 fi
 
@@ -233,15 +269,58 @@ if [ "$COLLECT_LEMBAGA" = true ]; then
     echo -e "${BOLD}${BLUE}🏢 LEMBAGA MANAGEMENT${NC}"
     echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     
-    # Lembaga routes
+    echo ""
+    echo -e "${CYAN}  📄 Lembaga Pages${NC}"
     collect_file "$CLIENT_ROOT/app/(dashboard)/lembaga/page.tsx"
     collect_file "$CLIENT_ROOT/app/(dashboard)/lembaga/[id]/page.tsx"
     
-    # Admin - Lembaga Management
+    echo ""
+    echo -e "${CYAN}  ⚙️  Admin Lembaga${NC}"
     collect_file "$CLIENT_ROOT/app/(dashboard)/admin/lembaga/page.tsx"
     
-    # Hooks
+    echo ""
+    echo -e "${CYAN}  🎣 Lembaga Hooks${NC}"
     collect_file "$CLIENT_ROOT/hooks/use-lembaga.ts"
+fi
+
+# ================================================
+# TEMPLATES MANAGEMENT
+# ================================================
+if [ "$COLLECT_TEMPLATES" = true ]; then
+    echo ""
+    echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BOLD}${BLUE}📋 TEMPLATES MANAGEMENT${NC}"
+    echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    
+    echo ""
+    echo -e "${CYAN}  📄 Template Pages${NC}"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/admin/templates/page.tsx"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/admin/templates/create/page.tsx"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/admin/templates/[id]/page.tsx"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/admin/templates/[id]/edit/page.tsx"
+    
+    echo ""
+    echo -e "${CYAN}  🔌 Template API${NC}"
+    collect_file "$CLIENT_ROOT/app/api/templates/route.ts"
+    collect_file "$CLIENT_ROOT/app/api/templates/[id]/route.ts"
+    
+    echo ""
+    echo -e "${CYAN}  🧩 Template Components${NC}"
+    collect_file "$CLIENT_ROOT/components/features/templates/index.ts"
+    collect_file "$CLIENT_ROOT/components/features/templates/template-form.tsx"
+    
+    echo ""
+    echo -e "${CYAN}  🎣 Template Hooks${NC}"
+    collect_file "$CLIENT_ROOT/hooks/use-template.ts"
+    
+    echo ""
+    echo -e "${CYAN}  📚 Template Libraries${NC}"
+    collect_file "$CLIENT_ROOT/lib/template-parser.ts"
+    collect_file "$CLIENT_ROOT/lib/tembusan-helper.ts"
+    
+    echo ""
+    echo -e "${CYAN}  📝 Template Types${NC}"
+    collect_file "$CLIENT_ROOT/types/template.ts"
 fi
 
 # ================================================
@@ -253,49 +332,60 @@ if [ "$COLLECT_SURAT" = true ]; then
     echo -e "${BOLD}${BLUE}✉️  SURAT MANAGEMENT${NC}"
     echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     
-    # Surat routes
+    echo ""
+    echo -e "${CYAN}  📄 Surat Pages${NC}"
     collect_file "$CLIENT_ROOT/app/(dashboard)/surat/page.tsx"
     collect_file "$CLIENT_ROOT/app/(dashboard)/surat/buat/page.tsx"
     collect_file "$CLIENT_ROOT/app/(dashboard)/surat/[id]/page.tsx"
     collect_file "$CLIENT_ROOT/app/(dashboard)/surat/[id]/edit/page.tsx"
     
-    # API routes
+    echo ""
+    echo -e "${CYAN}  🔌 Surat API${NC}"
     collect_file "$CLIENT_ROOT/app/api/surat/create/route.ts"
     collect_file "$CLIENT_ROOT/app/api/surat/[id]/route.ts"
     
-    # Constants
+    echo ""
+    echo -e "${CYAN}  ⚙️  Surat Config${NC}"
     collect_file "$CLIENT_ROOT/constants/surat-config.ts"
     collect_file "$CLIENT_ROOT/constants/template-registry.ts"
     
-    # Hooks
+    echo ""
+    echo -e "${CYAN}  🎣 Surat Hooks${NC}"
     collect_file "$CLIENT_ROOT/hooks/use-surat.ts"
     
-    # Lib
+    echo ""
+    echo -e "${CYAN}  📚 Surat Libraries${NC}"
     collect_file "$CLIENT_ROOT/lib/template-composer.ts"
     
-    # Types
-    collect_file "$CLIENT_ROOT/types/template.ts"
-    
-    # Surat Components
+    echo ""
+    echo -e "${CYAN}  🧩 Surat Core Components${NC}"
     collect_file "$CLIENT_ROOT/components/features/surat/index.ts"
     collect_file "$CLIENT_ROOT/components/features/surat/surat-renderer.tsx"
+    collect_file "$CLIENT_ROOT/components/features/surat/template-renderer.ts"
     
-    # Surat Forms
+    echo ""
+    echo -e "${CYAN}  📝 Surat Forms${NC}"
     collect_file "$CLIENT_ROOT/components/features/surat/forms/surat-form.tsx"
     collect_file "$CLIENT_ROOT/components/features/surat/forms/tembusan-input.tsx"
+    collect_file "$CLIENT_ROOT/components/features/surat/forms/template-dynamic-form.tsx"
     collect_file "$CLIENT_ROOT/components/features/surat/forms/template-fields.tsx"
     collect_file "$CLIENT_ROOT/components/features/surat/forms/template-selector.tsx"
+    collect_file "$CLIENT_ROOT/components/features/surat/forms/template-selector-db.tsx"
     
-    # Surat Layouts (Phase 1+2 refactored: 5 files → 1 universal-layout)
+    echo ""
+    echo -e "${CYAN}  🎨 Surat Layouts${NC}"
     collect_file "$CLIENT_ROOT/components/features/surat/layouts/universal-layout.tsx"
     
-    # Surat PDF
+    echo ""
+    echo -e "${CYAN}  📄 Surat PDF${NC}"
     collect_file "$CLIENT_ROOT/components/features/surat/pdf/index.ts"
     collect_file "$CLIENT_ROOT/components/features/surat/pdf/pdf-preview-modal.tsx"
     collect_file "$CLIENT_ROOT/components/features/surat/pdf/pdf-styles.ts"
     collect_file "$CLIENT_ROOT/components/features/surat/pdf/pdf-surat-document.tsx"
+    collect_file "$CLIENT_ROOT/components/features/surat/pdf/pdf-template-body.tsx"
     
-    # Surat Shared
+    echo ""
+    echo -e "${CYAN}  🔧 Surat Shared Components${NC}"
     collect_file "$CLIENT_ROOT/components/features/surat/shared/kop-surat.tsx"
     collect_file "$CLIENT_ROOT/components/features/surat/shared/signature-block.tsx"
     collect_file "$CLIENT_ROOT/components/features/surat/shared/surat-body.tsx"
@@ -313,11 +403,15 @@ echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━
 echo ""
 echo -e "${GREEN}📄 Output file: ${NC}$OUT"
 echo -e "${CYAN}📝 Total lines: ${NC}$(wc -l < "$OUT")"
+echo -e "${CYAN}📦 File size: ${NC}$(du -h "$OUT" | cut -f1)"
 echo ""
 echo -e "${BOLD}Features collected:${NC}"
 [ "$COLLECT_AUTH" = true ] && echo -e "  ${GREEN}✓${NC} Auth & User Management"
 [ "$COLLECT_LEMBAGA" = true ] && echo -e "  ${GREEN}✓${NC} Lembaga Management"
+[ "$COLLECT_TEMPLATES" = true ] && echo -e "  ${GREEN}✓${NC} Templates Management"
 [ "$COLLECT_SURAT" = true ] && echo -e "  ${GREEN}✓${NC} Surat Management"
+echo ""
+echo -e "${BOLD}${YELLOW}Note:${NC} shadcn/ui components skipped (auto-generated)"
 echo ""
 echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BOLD}${CYAN}✨ Ready to download!${NC}"
