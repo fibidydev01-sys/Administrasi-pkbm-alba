@@ -1,28 +1,26 @@
-import { FlatCompat } from '@eslint/eslintrc'
+import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 
-const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
-})
-
+/** @type {import('eslint').Linter.Config[]} */
 const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     rules: {
-      // Disable problematic rules for build
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn',
-      'react-hooks/exhaustive-deps': 'warn',
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
   {
     ignores: [
-      '.next/**',
-      'out/**',
-      'build/**',
-      'next-env.d.ts',
-      'node_modules/**',
+      ".next/**",
+      "out/**",
+      "build/**",
+      "next-env.d.ts",
+      "node_modules/**",
     ],
   },
-]
+];
 
-export default eslintConfig
+export default eslintConfig;

@@ -3,6 +3,7 @@ import {
   Building2,
   Users,
   FileStack,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -29,6 +30,11 @@ export const staffNavItems: NavItem[] = [
     href: "/lembaga",
     icon: Building2,
   },
+  {
+    title: "SPP",
+    href: "/spp",
+    icon: Wallet,
+  },
 ];
 
 export const adminNavItems: NavItem[] = [
@@ -36,6 +42,11 @@ export const adminNavItems: NavItem[] = [
     title: "Surat Keluar",
     href: "/surat",
     icon: FileText,
+  },
+  {
+    title: "SPP",
+    href: "/spp",
+    icon: Wallet,
   },
 ];
 

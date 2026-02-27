@@ -8,3 +8,6 @@ export * from "./auth";
 
 // Surat
 export * from "./surat";
+
+// Spp
+export * from "./spp";

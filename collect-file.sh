@@ -68,17 +68,19 @@ echo -e "${BOLD}1.${NC} ✉️  ${GREEN}SURAT${NC} - Manajemen surat menyurat"
 echo -e "${BOLD}2.${NC} 🏢 ${GREEN}LEMBAGA${NC} - Manajemen organisasi/institusi"
 echo -e "${BOLD}3.${NC} 🔐 ${GREEN}AUTH & USER${NC} - Authentication & manajemen pengguna"
 echo -e "${BOLD}4.${NC} 📋 ${GREEN}TEMPLATES${NC} - Manajemen template surat"
-echo -e "${BOLD}5.${NC} 📦 ${GREEN}ALL${NC} - Semua fitur"
-echo -e "${BOLD}6.${NC} 🎯 ${GREEN}CUSTOM${NC} - Pilih kombinasi fitur"
+echo -e "${BOLD}5.${NC} 💰 ${GREEN}SPP${NC} - Manajemen keuangan & tagihan siswa"
+echo -e "${BOLD}6.${NC} 📦 ${GREEN}ALL${NC} - Semua fitur"
+echo -e "${BOLD}7.${NC} 🎯 ${GREEN}CUSTOM${NC} - Pilih kombinasi fitur"
 echo -e "${BOLD}0.${NC} ❌ ${RED}EXIT${NC}"
 echo ""
-echo -ne "${BOLD}${YELLOW}Pilihan Anda [0-6]: ${NC}"
+echo -ne "${BOLD}${YELLOW}Pilihan Anda [0-7]: ${NC}"
 read choice
 
 COLLECT_SURAT=false
 COLLECT_LEMBAGA=false
 COLLECT_AUTH=false
 COLLECT_TEMPLATES=false
+COLLECT_SPP=false
 
 case $choice in
     1)
@@ -98,16 +100,21 @@ case $choice in
         echo -e "${GREEN}✓ Collecting: TEMPLATES${NC}"
         ;;
     5)
+        COLLECT_SPP=true
+        echo -e "${GREEN}✓ Collecting: SPP${NC}"
+        ;;
+    6)
         COLLECT_SURAT=true
         COLLECT_LEMBAGA=true
         COLLECT_AUTH=true
         COLLECT_TEMPLATES=true
+        COLLECT_SPP=true
         echo -e "${GREEN}✓ Collecting: ALL FEATURES${NC}"
         ;;
-    6)
+    7)
         echo ""
-        echo -e "${BOLD}${CYAN}Pilih fitur (pisahkan dengan spasi, contoh: 1 3 4):${NC}"
-        echo -e "1. SURAT  2. LEMBAGA  3. AUTH  4. TEMPLATES"
+        echo -e "${BOLD}${CYAN}Pilih fitur (pisahkan dengan spasi, contoh: 1 3 5):${NC}"
+        echo -e "1. SURAT  2. LEMBAGA  3. AUTH  4. TEMPLATES  5. SPP"
         echo -ne "${BOLD}${YELLOW}Fitur: ${NC}"
         read -a features
         
@@ -117,6 +124,7 @@ case $choice in
                 2) COLLECT_LEMBAGA=true; echo -e "${GREEN}✓ Added: LEMBAGA${NC}" ;;
                 3) COLLECT_AUTH=true; echo -e "${GREEN}✓ Added: AUTH${NC}" ;;
                 4) COLLECT_TEMPLATES=true; echo -e "${GREEN}✓ Added: TEMPLATES${NC}" ;;
+                5) COLLECT_SPP=true; echo -e "${GREEN}✓ Added: SPP${NC}" ;;
             esac
         done
         ;;
@@ -308,6 +316,7 @@ if [ "$COLLECT_TEMPLATES" = true ]; then
     echo -e "${CYAN}  🧩 Template Components${NC}"
     collect_file "$CLIENT_ROOT/components/features/templates/index.ts"
     collect_file "$CLIENT_ROOT/components/features/templates/template-form.tsx"
+    collect_file "$CLIENT_ROOT/components/features/templates/template-preview-modal.tsx"
     
     echo ""
     echo -e "${CYAN}  🎣 Template Hooks${NC}"
@@ -317,6 +326,7 @@ if [ "$COLLECT_TEMPLATES" = true ]; then
     echo -e "${CYAN}  📚 Template Libraries${NC}"
     collect_file "$CLIENT_ROOT/lib/template-parser.ts"
     collect_file "$CLIENT_ROOT/lib/tembusan-helper.ts"
+    collect_file "$CLIENT_ROOT/lib/template-sample-data.ts"
     
     echo ""
     echo -e "${CYAN}  📝 Template Types${NC}"
@@ -356,6 +366,7 @@ if [ "$COLLECT_SURAT" = true ]; then
     echo ""
     echo -e "${CYAN}  📚 Surat Libraries${NC}"
     collect_file "$CLIENT_ROOT/lib/template-composer.ts"
+    collect_file "$CLIENT_ROOT/lib/mock-surat-generator.ts"
     
     echo ""
     echo -e "${CYAN}  🧩 Surat Core Components${NC}"
@@ -394,6 +405,76 @@ if [ "$COLLECT_SURAT" = true ]; then
 fi
 
 # ================================================
+# SPP MANAGEMENT
+# ================================================
+if [ "$COLLECT_SPP" = true ]; then
+    echo ""
+    echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BOLD}${BLUE}💰 SPP MANAGEMENT${NC}"
+    echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    echo ""
+    echo -e "${CYAN}  📝 SPP Types & Config${NC}"
+    collect_file "$CLIENT_ROOT/types/spp.ts"
+    collect_file "$CLIENT_ROOT/constants/spp-config.ts"
+
+    echo ""
+    echo -e "${CYAN}  💾 SPP Store${NC}"
+    collect_file "$CLIENT_ROOT/stores/spp-store.ts"
+
+    echo ""
+    echo -e "${CYAN}  🎣 SPP Hooks${NC}"
+    collect_file "$CLIENT_ROOT/hooks/use-siswa.ts"
+    collect_file "$CLIENT_ROOT/hooks/use-jenis-tagihan.ts"
+    collect_file "$CLIENT_ROOT/hooks/use-tagihan.ts"
+    collect_file "$CLIENT_ROOT/hooks/use-pembayaran.ts"
+    collect_file "$CLIENT_ROOT/hooks/use-pengeluaran.ts"
+    collect_file "$CLIENT_ROOT/hooks/use-ringkasan-spp.ts"
+
+    echo ""
+    echo -e "${CYAN}  🔌 SPP API${NC}"
+    collect_file "$CLIENT_ROOT/app/api/spp/tagihan/route.ts"
+    collect_file "$CLIENT_ROOT/app/api/spp/tagihan/generate/route.ts"
+    collect_file "$CLIENT_ROOT/app/api/spp/pembayaran/route.ts"
+    collect_file "$CLIENT_ROOT/app/api/spp/pengeluaran/route.ts"
+
+    echo ""
+    echo -e "${CYAN}  🧩 SPP Components${NC}"
+    collect_file "$CLIENT_ROOT/components/features/spp/index.ts"
+    collect_file "$CLIENT_ROOT/components/features/spp/siswa-table.tsx"
+    collect_file "$CLIENT_ROOT/components/features/spp/tagihan-status-badge.tsx"
+
+    echo ""
+    echo -e "${CYAN}  📝 SPP Forms${NC}"
+    collect_file "$CLIENT_ROOT/components/features/spp/forms/siswa-form.tsx"
+    collect_file "$CLIENT_ROOT/components/features/spp/forms/jenis-tagihan-form.tsx"
+    collect_file "$CLIENT_ROOT/components/features/spp/forms/pembayaran-form.tsx"
+    collect_file "$CLIENT_ROOT/components/features/spp/forms/pengeluaran-form.tsx"
+
+    echo ""
+    echo -e "${CYAN}  📄 SPP PDF${NC}"
+    collect_file "$CLIENT_ROOT/components/features/spp/pdf/pdf-tagihan-document.tsx"
+    collect_file "$CLIENT_ROOT/components/features/spp/pdf/pdf-kwitansi-document.tsx"
+    collect_file "$CLIENT_ROOT/components/features/spp/pdf/pdf-laporan-bulanan.tsx"
+    collect_file "$CLIENT_ROOT/components/features/spp/pdf/pdf-laporan-document.tsx"
+
+    echo ""
+    echo -e "${CYAN}  📄 SPP Pages (Staff)${NC}"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/spp/page.tsx"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/spp/siswa/page.tsx"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/spp/tagihan/page.tsx"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/spp/tagihan/generate/page.tsx"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/spp/tagihan/[id]/page.tsx"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/spp/pengeluaran/page.tsx"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/spp/laporan/page.tsx"
+
+    echo ""
+    echo -e "${CYAN}  ⚙️  SPP Pages (Admin)${NC}"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/admin/spp/siswa/page.tsx"
+    collect_file "$CLIENT_ROOT/app/(dashboard)/admin/spp/jenis-tagihan/page.tsx"
+fi
+
+# ================================================
 # SUMMARY
 # ================================================
 echo ""
@@ -410,6 +491,7 @@ echo -e "${BOLD}Features collected:${NC}"
 [ "$COLLECT_LEMBAGA" = true ] && echo -e "  ${GREEN}✓${NC} Lembaga Management"
 [ "$COLLECT_TEMPLATES" = true ] && echo -e "  ${GREEN}✓${NC} Templates Management"
 [ "$COLLECT_SURAT" = true ] && echo -e "  ${GREEN}✓${NC} Surat Management"
+[ "$COLLECT_SPP" = true ] && echo -e "  ${GREEN}✓${NC} SPP Management"
 echo ""
 echo -e "${BOLD}${YELLOW}Note:${NC} shadcn/ui components skipped (auto-generated)"
 echo ""

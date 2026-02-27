@@ -20,3 +20,18 @@ export {
   getTemplate,
   getTemplateOptions,
 } from "./template-registry";
+export {
+  TAGIHAN_STATUS_CONFIG,
+  METODE_PEMBAYARAN_OPTIONS,
+  JENIS_TAGIHAN_TIPE_OPTIONS,
+  KATEGORI_PENGELUARAN_OPTIONS,
+  PROGRAM_OPTIONS,
+  BULAN_OPTIONS,
+  getBulanLabel,
+  formatRupiah,
+  getSisaTagihan,
+  getCurrentBulan,
+  getCurrentTahun,
+  getTahunOptions,
+} from "./spp-config";
+export type { KategoriPengeluaran } from "./spp-config";
